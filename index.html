@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Report Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 50%, #fce7f3 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-bottom: 4px solid #4f46e5;
+            padding: 24px;
+        }
+        
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .icon-box {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        
+        .icon-box svg {
+            width: 32px;
+            height: 32px;
+            stroke: white;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .status-badge {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .tabs {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            margin-top: 32px;
+        }
+        
+        .tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+        }
+        
+        .tab:hover {
+            background: #f3f4f6;
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .tab svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .content {
+            margin-top: 32px;
+            display: none;
+        }
+        
+        .content.active {
+            display: block;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 24px;
+        }
+        
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+        
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: scale(1.05);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .card-header svg {
+            width: 28px;
+            height: 28px;
+        }
+        
+        .card-header h2 {
+            font-size: 24px;
+            color: #1f2937;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+        
+        .form-textarea {
+            resize: vertical;
+        }
+        
+        .metric-card {
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .metric-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .metric-card-header svg {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .metric-value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+        
+        .metric-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .metric-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        
+        .bg-red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .bg-yellow {
+            background: linear-gradient(135deg, #eab308 0%, #f97316 100%);
+        }
+        
+        .bg-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
+        }
+        
+        .bg-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .analyze-section {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .analyze-icon {
+            background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%);
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+        
+        .analyze-icon svg {
+            width: 48px;
+            height: 48px;
+            stroke: #4f46e5;
+        }
+        
+        .analyze-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        
+        .analyze-description {
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 48px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+            transform: scale(1.05);
+        }
+        
+        .btn svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .progress-container {
+            margin: 32px 0;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .progress-badge {
+            background: #ddd6fe;
+            color: #4f46e5;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .progress-percent {
+            color: #4f46e5;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .progress-bar {
+            height: 16px;
+            background: #ddd6fe;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            transition: width 0.3s;
+        }
+        
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        
+        .dot:nth-child(1) {
+            background: #4f46e5;
+            animation-delay: -0.32s;
+        }
+        
+        .dot:nth-child(2) {
+            background: #7c3aed;
+            animation-delay: -0.16s;
+        }
+        
+        .dot:nth-child(3) {
+            background: #ec4899;
+        }
+        
+        @keyframes bounce {
+            0%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+        }
+        
+        .success-box {
+            background: #d1fae5;
+            border: 2px solid #6ee7b7;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .success-box svg {
+            width: 48px;
+            height: 48px;
+            stroke: #10b981;
+            margin: 0 auto 16px;
+        }
+        
+        .success-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #065f46;
+            margin-bottom: 8px;
+        }
+        
+        .success-text {
+            color: #047857;
+        }
+        
+        .summary-item {
+            border-left: 4px solid;
+            padding-left: 16px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .summary-item h3 {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .summary-item p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .schedule-card {
+            background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+            border: 2px solid #c7d2fe;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .schedule-status {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .schedule-info {
+            font-size: 14px;
+        }
+        
+        .schedule-label {
+            color: #6b7280;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .schedule-value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .report-list {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        
+        .report-list h3 {
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        
+        .report-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: background 0.3s;
+        }
+        
+        .report-item:hover {
+            background: #f3f4f6;
+        }
+        
+        .report-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .report-item-left svg {
+            width: 20px;
+            height: 20px;
+            stroke: #10b981;
+        }
+        
+        .report-item-date {
+            color: #374151;
+        }
+        
+        .report-item-link {
+            color: #4f46e5;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .report-item-link:hover {
+            color: #7c3aed;
+        }
+        
+        footer {
+            background: white;
+            border-top: 2px solid #e5e7eb;
+            margin-top: 64px;
+            padding: 32px 24px;
+        }
+        
+        .footer-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .footer-link {
+            color: #6b7280;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-link:hover {
+            color: #4f46e5;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="icon-box">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>AI Code Report Generator</h1>
+                    <p class="subtitle">Automated daily code analysis & reporting</p>
+                </div>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>Active</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="configure">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span>Configure</span>
+            </button>
+            <button class="tab" data-tab="analyze">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>Analyze</span>
+            </button>
+            <button class="tab" data-tab="report">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <span>Report</span>
+            </button>
+            <button class="tab" data-tab="schedule">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>Schedule</span>
+            </button>
+        </div>
+
+        <!-- Configure Content -->
+        <div id="configure" class="content active">
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <svg fill="none" stroke="#4f46e5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <h2>Repository Settings</h2>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Repository URL</label>
+                        <input type="text" class="form-input" id="repoUrl" placeholder="https://github.com/username/repository">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Branch</label>
+                        <input type="text" class="form-input" id="branch" value="main">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Analysis Model</label>
+                        <select class="form-select" id="model">
+                            <option value="gemini1.5flash">Gemini 1.5 Flash</option>
+                            <option value="gemini1.5pro">Gemini 1.5 Pro</option>
+                            <option value="claude-sonnet">Claude Sonnet</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <svg fill="none" stroke="#7c3aed" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <h2>Email Settings</h2>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Recipients (comma-separated)</label>
+                        <textarea class="form-textarea" id="recipients" rows="3" placeholder="dev@company.com, manager@company.com"></textarea>
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Time</label>
+                            <input type="time" class="form-input" id="scheduleTime" value="09:00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Frequency</label>
+                            <select class="form-select" id="frequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="biweekly">Bi-weekly</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analyze Content -->
+        <div id="analyze" class="content">
+            <div class="card">
+                <div class="analyze-section">
+                    <div class="analyze-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h2 class="analyze-title">Run Code Analysis</h2>
+                    <p class="analyze-description">
+                        Analyze your codebase using AI-powered static analysis to identify issues, complexity, and quality metrics.
+                    </p>
+
+                    <div id="analyzeButton">
+                        <button class="btn btn-primary" onclick="startAnalysis()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>Start Analysis</span>
+                        </button>
+                    </div>
+
+                    <div id="progressSection" class="hidden">
+                        <div class="progress-container">
+                            <div class="progress-header">
+                                <span class="progress-badge">Analyzing</span>
+                                <span class="progress-percent" id="progressPercent">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="loading-dots">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                    </div>
+
+                    <div id="successSection" class="hidden">
+                        <div class="success-box">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <h3 class="success-title">Analysis Complete!</h3>
+                            <p class="success-text">Your report is ready. Check the Report tab to view details.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Content -->
+        <div id="report" class="content">
+            <div class="grid grid-4">
+                <div class="metric-card bg-red">
+                    <div class="metric-card-header">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <span class="metric-value" id="criticalCount">0</span>
+                    </div>
+                    <h3 class="metric-title">Critical Issues</h3>
+                    <p class="metric-subtitle">Requires immediate attention</p>
+                </div>
+
+                <div class="metric-card bg-yellow">
+                    <div class="metric-card-header">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <span class="metric-value" id="warningCount">0</span>
+                    </div>
+                    <h3 class="metric-title">Warnings</h3>
+                    <p class="metric-subtitle">Should be addressed soon</p>
+                </div>
+
+                <div class="metric-card bg-blue">
+                    <div class="metric-card-header">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span class="metric-value" id="complexityScore">0</span>
+                    </div>
+                    <h3 class="metric-title">Complexity Score</h3>
+                    <p class="metric-subtitle">Average cyclomatic complexity</p>
+                </div>
+
+                <div class="metric-card bg-green">
+                    <div class="metric-card-header">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="metric-value" id="qualityScore">0%</span>
+                    </div>
+                    <h3 class="metric-title">Code Quality</h3>
+                    <p class="metric-subtitle">Overall quality rating</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 24px;">
+                <h2 style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 24px;">Analysis Summary</h2>
+                <div>
+                    <div class="summary-item" style="border-left-color: #4f46e5;">
+                        <h3>Code Structure</h3>
+                        <p>Well-organized modules with clear separation of concerns. Consider refactoring legacy components.</p>
+                    </div>
+                    <div class="summary-item" style="border-left-color: #7c3aed;">
+                        <h3>Security</h3>
+                        <p>No critical vulnerabilities detected. Update dependencies to patch minor security issues.</p>
+                    </div>
+                    <div class="summary-item" style="border-left-color: #ec4899;">
+                        <h3>Performance</h3>
+                        <p>Optimize database queries in user service. Consider implementing caching for frequently accessed data.</p>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        <span>Download PDF</span>
+                    </button>
+                    <button class="btn btn-secondary">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                        <span>Send Email</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Content -->
+        <div id="schedule" class="content">
+            <div class="card">
+                <div class="card-header">
+                    <svg fill="none" stroke="#4f46e5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h2>Automated Schedule</h2>
+                </div>
+
+                <div class="schedule-card">
+                    <div class="schedule-header">
+                        <div>
+                            <h3 style="font-size: 18px; font-weight: bold; color: #1f2937;">Daily Report Schedule</h3>
+                            <p style="color: #6b7280; font-size: 14px;">Automatic analysis and email delivery</p>
+                        </div>
+                        <div class="schedule-status">Active</div>
+                    </div>
+                    <div class="schedule-grid">
+                        <div class="schedule-info">
+                            <span class="schedule-label">Frequency</span>
+                            <p class="schedule-value" id="displayFrequency">Daily</p>
+                        </div>
+                        <div class="schedule-info">
+                            <span class="schedule-label">Time</span>
+                            <p class="schedule-value" id="displayTime">09:00</p>
+                        </div>
+                        <div class="schedule-info">
+                            <span class="schedule-label">Recipients</span>
+                            <p class="schedule-value" id="displayRecipients">0 people</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-list">
+                    <h3>Recent Reports</h3>
+                    <div class="report-item">
+                        <div class="report-item-left">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="report-item-date">Today, 9:00 AM</span>
+                        </div>
+                        <span class="report-item-link">View</span>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-left">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="report-item-date">Yesterday, 9:00 AM</span>
+                        </div>
+                        <span class="report-item-link">View</span>
+                    </div>
+                    <div class="report-item">
+                        <div class="report-item-left">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="report-item-date">Jan 10, 9:00 AM</span>
+                        </div>
+                        <span class="report-item-link">View</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p style="color: #6b7280;">© 2026 AI Code Report Generator. Powered by Gemini 1.5 Flash</p>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Documentation</a>
+                <a href="#" class="footer-link">Support</a>
+                <a href="#" class="footer-link">API</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+
+                // Update tab active states
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Update content visibility
+                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Analysis functionality
+        let progressInterval;
+
+        function startAnalysis() {
+            document.getElementById('analyzeButton').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+            document.getElementById('successSection').classList.add('hidden');
+
+            let progress = 0;
+            progressInterval = setInterval(() => {
+                progress += 2;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressPercent').textContent = progress + '%';
+
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(() => {
+                        document.getElementById('progressSection').classList.add('hidden');
+                        document.getElementById('successSection').classList.remove('hidden');
+                        updateMetrics();
+                    }, 500);
+                }
+            }, 100);
+        }
+
+        function updateMetrics() {
+            const critical = Math.floor(Math.random() * 5);
+            const warnings = Math.floor(Math.random() * 20) + 5;
+            const complexity = Math.floor(Math.random() * 30) + 50;
+            const quality = Math.floor(Math.random() * 20) + 70;
+
+            document.getElementById('criticalCount').textContent = critical;
+            document.getElementById('warningCount').textContent = warnings;
+            document.getElementById('complexityScore').textContent = complexity;
+            document.getElementById('qualityScore').textContent = quality + '%';
+        }
+
+        // Update schedule display when inputs change
+        document.getElementById('frequency').addEventListener('change', (e) => {
+            document.getElementById('displayFrequency').textContent =
+                e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1);
+        });
+
+        document.getElementById('scheduleTime').addEventListener('change', (e) => {
+            document.getElementById('displayTime').textContent = e.target.value;
+        });
+
+        document.getElementById('recipients').addEventListener('input', (e) => {
+            const count = e.target.value.split(',').filter(r => r.trim()).length;
+            document.getElementById('displayRecipients').textContent = count + ' people';
+        });
+    </script>
+</body>
+
+</html>
