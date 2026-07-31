@@ -44,6 +44,12 @@ async def lifespan(app: FastAPI):
     if IS_SERVERLESS:
         logger.info("Scheduler disabled: running on serverless platform")
     else:
+        # Display access URL when running locally
+        host = "localhost" if settings.app_host == "0.0.0.0" else settings.app_host
+        url = f"http://{host}:{settings.app_port}"
+        logger.info(f"Application running at: {url}")
+        print(f"\n Application running at: {url} \n")
+        
         try:
             scheduler = ReportScheduler()
             scheduler.start()
