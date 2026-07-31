@@ -4,12 +4,23 @@ from git import Repo, GitCommandError
 from typing import Optional
 
 
+import tempfile
+
 class GitManager:
     """Manages Git repository operations."""
     
-    def __init__(self, base_path: str = "./data/repos"):
+    def __init__(self, base_path: Optional[str] = None):
+        if base_path is None:
+            if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+                base_path = "/tmp/repos"
+            else:
+                base_path = "./data/repos"
         self.base_path = base_path
-        os.makedirs(self.base_path, exist_ok=True)
+        try:
+            os.makedirs(self.base_path, exist_ok=True)
+        except Exception:
+            self.base_path = os.path.join(tempfile.gettempdir(), "repos")
+            os.makedirs(self.base_path, exist_ok=True)
     
     def get_repo_name(self, url: str) -> str:
         """Extract repository name from URL."""

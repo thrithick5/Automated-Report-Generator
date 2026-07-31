@@ -4,8 +4,11 @@ from app.models import Base
 from app.config import settings
 import os
 
-# Ensure data directory exists
-os.makedirs("data", exist_ok=True)
+# Ensure data directory exists if writeable
+try:
+    os.makedirs("data", exist_ok=True)
+except Exception:
+    pass
 
 # Create database engine
 db_url = settings.database_url
