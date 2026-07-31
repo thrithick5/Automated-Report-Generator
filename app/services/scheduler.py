@@ -2,72 +2,29 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models import Configuration, Report
-from app.services.git_manager import GitManager
-from app.services.analyzer import CodeAnalyzer
-from app.services.emailer import EmailService
+from app.models import Configuration
+from app.services.analysis_service import run_analysis
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class ReportScheduler:
-    """Manages scheduled report generation."""
-    
+    """Manages scheduled report generation (local/long-running processes only).
+
+    On serverless platforms (Vercel) the scheduler is disabled and scheduled
+    runs are triggered by the Vercel Cron Job calling /api/analyze/cron.
+    """
+
     def __init__(self):
         self.scheduler = BackgroundScheduler()
-        self.git_manager = GitManager()
-        self.analyzer = CodeAnalyzer()
-        self.emailer = EmailService()
-    
+
     def run_analysis_job(self, db: Session, config_id: int = 1):
-        """
-        Execute the full analysis pipeline.
-        
-        Args:
-            db: Database session
-            config_id: Configuration ID to use
-        """
+        """Execute the full analysis pipeline via the shared service."""
         try:
             logger.info(f"Starting scheduled analysis job at {datetime.now()}")
-            
-            # Get configuration
-            config = db.query(Configuration).filter(Configuration.id == config_id).first()
-            if not config:
-                logger.error("No configuration found")
-                return
-            
-            # Clone/pull repository
-            logger.info(f"Fetching repository: {config.repo_url}")
-            repo_path, is_new = self.git_manager.clone_or_pull(config.repo_url, config.branch)
-            
-            # Analyze code
-            logger.info("Analyzing code...")
-            analysis_result = self.analyzer.analyze_code(repo_path)
-            
-            # Save report to database
-            report = Report(
-                repo_url=config.repo_url,
-                summary=analysis_result.get('summary', ''),
-                critical_count=analysis_result.get('metrics', {}).get('critical', 0),
-                warning_count=analysis_result.get('metrics', {}).get('warnings', 0),
-                complexity_score=analysis_result.get('metrics', {}).get('complexity', 0),
-                quality_score=analysis_result.get('metrics', {}).get('quality_score', 0),
-                full_report=analysis_result
-            )
-            db.add(report)
-            db.commit()
-            logger.info(f"Report saved with ID: {report.id}")
-            
-            # Send email
-            if config.recipients:
-                recipients = [r.strip() for r in config.recipients.split(',') if r.strip()]
-                if recipients:
-                    logger.info(f"Sending email to {len(recipients)} recipients")
-                    self.emailer.send_report(recipients, analysis_result, config.repo_url)
-            
-            logger.info("Analysis job completed successfully")
-            
+            result = run_analysis(db, config_id)
+            logger.info(f"Analysis job finished: {result}")
         except Exception as e:
             logger.error(f"Analysis job failed: {str(e)}")
     

@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite:///./data/reports.db"
     
+    # GitHub (optional token for private repositories)
+    github_token: str = ""
+    
+    # Cron (Vercel Cron Jobs protection)
+    cron_secret: str = ""
+    
     # Application
     app_host: str = "0.0.0.0"
     app_port: int = 8000

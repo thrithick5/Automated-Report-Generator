@@ -35,3 +35,18 @@ class Report(Base):
     quality_score = Column(Integer, default=0)
     full_report = Column(JSON)  # Complete JSON report from Gemini
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AnalysisRun(Base):
+    """Tracks the status of analysis runs (manual, scheduled, or cron-triggered)."""
+    __tablename__ = "analysis_runs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    started_at = Column(DateTime, default=datetime.utcnow)
+    finished_at = Column(DateTime, nullable=True)
+    status = Column(String, default="running")  # running, success, failed
+    repo_url = Column(String)
+    branch = Column(String)
+    error_message = Column(Text, nullable=True)
+    email_sent = Column(Integer, default=0)  # 0/1
+    report_id = Column(Integer, nullable=True)

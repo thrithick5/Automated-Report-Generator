@@ -1,1243 +1,691 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Code Report Generator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: white;
-            min-height: 100vh;
-        }
-
-        .header {
-            background: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border-bottom: 4px solid rgb(3, 107, 198);
-            padding: 24px;
-        }
-
-        .header-content {
-            max-width: 1280px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .icon-box {
-            background: black;
-            padding: 12px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-
-        .icon-box svg {
-            width: 32px;
-            height: 32px;
-            stroke: white;
-        }
-
-        h1 {
-            font-size: 28px;
-            font-weight: bold;
-            background: black;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle {
-            color: #6b7280;
-            font-size: 14px;
-            margin-top: 4px;
-        }
-
-        .status-badge {
-            background: #d1fae5;
-            color: #065f46;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-
-        .tabs {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 8px;
-            display: flex;
-            gap: 8px;
-            margin-top: 32px;
-        }
-
-        .tab {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 16px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            background: transparent;
-            color: #6b7280;
-        }
-
-        .tab:hover {
-            background: #f3f4f6;
-        }
-
-        .tab.active {
-            background: black;
-            color: white;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-            transform: scale(1.05);
-        }
-
-        .tab svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .content {
-            margin-top: 32px;
-            display: none;
-        }
-
-        .content.active {
-            display: block;
-        }
-
-        .grid {
-            display: grid;
-            gap: 24px;
-        }
-
-        .grid-2 {
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        }
-
-        .grid-4 {
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        }
-
-        .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 32px;
-            transition: transform 0.3s;
-        }
-
-        .card:hover {
-            transform: scale(1.05);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .card-header svg {
-            width: 28px;
-            height: 28px;
-        }
-
-        .card-header h2 {
-            font-size: 24px;
-            color: #1f2937;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-        }
-
-        .form-input,
-        .form-select,
-        .form-textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
-            outline: none;
-            border-color: #4f46e5;
-        }
-
-        .form-textarea {
-            resize: vertical;
-        }
-
-        .metric-card {
-            border-radius: 16px;
-            padding: 24px;
-            color: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s;
-        }
-
-        .metric-card:hover {
-            transform: scale(1.05);
-        }
-
-        .metric-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .metric-card-header svg {
-            width: 32px;
-            height: 32px;
-        }
-
-        .metric-value {
-            font-size: 36px;
-            font-weight: bold;
-        }
-
-        .metric-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-
-        .metric-subtitle {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-top: 4px;
-        }
-
-        .bg-red {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-
-        .bg-yellow {
-            background: linear-gradient(135deg, #eab308 0%, #f97316 100%);
-        }
-
-        .bg-blue {
-            background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
-        }
-
-        .bg-green {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-
-        .analyze-section {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .analyze-icon {
-            background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%);
-            width: 96px;
-            height: 96px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-        }
-
-        .analyze-icon svg {
-            width: 48px;
-            height: 48px;
-            stroke: black;
-        }
-
-        .analyze-title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #1f2937;
-            margin-bottom: 16px;
-        }
-
-        .analyze-description {
-            color: #6b7280;
-            margin-bottom: 32px;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px 48px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-        }
-
-        .btn-primary {
-            background: black;
-            color: white;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn-primary:hover {
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
-            transform: scale(1.05);
-        }
-
-        .btn svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        .progress-container {
-            margin: 32px 0;
-        }
-
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .progress-badge {
-            background: #ddd6fe;
-            color: #4f46e5;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .progress-percent {
-            color: #4f46e5;
-            font-weight: 600;
-            font-size: 12px;
-        }
-
-        .progress-bar {
-            height: 16px;
-            background: #ddd6fe;
-            border-radius: 999px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            transition: width 0.3s;
-        }
-
-        .loading-dots {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 24px;
-        }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out;
-        }
-
-        .dot:nth-child(1) {
-            background: #4f46e5;
-            animation-delay: -0.32s;
-        }
-
-        .dot:nth-child(2) {
-            background: #7c3aed;
-            animation-delay: -0.16s;
-        }
-
-        .dot:nth-child(3) {
-            background: #ec4899;
-        }
-
-        @keyframes bounce {
-
-            0%,
-            80%,
-            100% {
-                transform: translateY(0);
-            }
-
-            40% {
-                transform: translateY(-20px);
-            }
-        }
-
-        .success-box {
-            background: #d1fae5;
-            border: 2px solid #6ee7b7;
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-        }
-
-        .success-box svg {
-            width: 48px;
-            height: 48px;
-            stroke: #10b981;
-            margin: 0 auto 16px;
-        }
-
-        .success-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #065f46;
-            margin-bottom: 8px;
-        }
-
-        .success-text {
-            color: #047857;
-        }
-
-        .summary-item {
-            border-left: 4px solid;
-            padding-left: 16px;
-            padding-top: 8px;
-            padding-bottom: 8px;
-            margin-bottom: 16px;
-        }
-
-        .summary-item h3 {
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 4px;
-        }
-
-        .summary-item p {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 16px;
-            margin-top: 32px;
-        }
-
-        .btn-secondary {
-            background: black;
-            color: white;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-
-        .schedule-card {
-            background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
-            border: 2px solid #c7d2fe;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        .schedule-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .schedule-status {
-            background: #10b981;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-
-        .schedule-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-top: 16px;
-        }
-
-        .schedule-info {
-            font-size: 14px;
-        }
-
-        .schedule-label {
-            color: #6b7280;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .schedule-value {
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .report-list {
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 24px;
-        }
-
-        .report-list h3 {
-            font-weight: bold;
-            color: #1f2937;
-            margin-bottom: 16px;
-        }
-
-        .report-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #f9fafb;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            transition: background 0.3s;
-        }
-
-        .report-item:hover {
-            background: #f3f4f6;
-        }
-
-        .report-item-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .report-item-left svg {
-            width: 20px;
-            height: 20px;
-            stroke: #10b981;
-        }
-
-        .report-item-date {
-            color: #374151;
-        }
-
-        .report-item-link {
-            color: #4f46e5;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .report-item-link:hover {
-            color: #7c3aed;
-        }
-
-        footer {
-            background: white;
-            border-top: 2px solid #e5e7eb;
-            margin-top: 64px;
-            padding: 32px 24px;
-        }
-
-        .footer-content {
-            max-width: 1280px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        .footer-link {
-            color: #6b7280;
-            font-weight: 600;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .footer-link:hover {
-            color: black;
-        }
-
-        .hidden {
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Code Report Generator</title>
+<style>
+  :root {
+    --bg: #f3f4f8;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --success: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px -12px rgba(16, 24, 40, .14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  /* ---------- Header ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px;
+    background: rgba(255,255,255,.9); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-logo {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 18px;
+    box-shadow: 0 4px 12px -4px rgba(99,102,241,.6);
+  }
+  .brand h1 { font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
+  .brand small { color: var(--muted); font-size: 12px; display: block; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff;
+  }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .pill.good .dot { background: var(--success); box-shadow: 0 0 0 3px rgba(16,185,129,.15); }
+  .pill.bad .dot { background: var(--danger); box-shadow: 0 0 0 3px rgba(239,68,68,.15); }
+  .pill.warn .dot { background: var(--warn); box-shadow: 0 0 0 3px rgba(245,158,11,.15); }
+  .pill.busy .dot { background: var(--accent); animation: pulse 1.1s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .head-right { display: flex; align-items: center; gap: 10px; }
+  /* ---------- Tabs ---------- */
+  .tabs {
+    display: flex; gap: 6px; padding: 14px 28px 0;
+    max-width: 1080px; margin: 0 auto;
+  }
+  .tab-btn {
+    border: 1px solid transparent; background: transparent; color: var(--muted);
+    font: inherit; font-size: 14px; font-weight: 600;
+    padding: 9px 18px; border-radius: 10px; cursor: pointer;
+    transition: all .15s ease;
+  }
+  .tab-btn:hover { background: #fff; color: var(--text); }
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; box-shadow: 0 4px 14px -6px rgba(99,102,241,.7);
+  }
+  /* ---------- Layout ---------- */
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 22px 28px 60px; }
+  .tab { display: none; }
+  .tab.active { display: block; animation: fade .2s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 860px) { .grid-2, .grid-4 { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow);
+  }
+  .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .card .hint { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .section-title { font-size: 15px; font-weight: 700; margin: 6px 0 14px; display: flex; align-items: center; gap: 8px; }
+  /* ---------- Forms ---------- */
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin: 14px 0 6px; }
+  label:first-child { margin-top: 0; }
+  input, select {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+    font: inherit; font-size: 14px; background: #fff; color: var(--text); outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .row-2 { grid-template-columns: 1fr; } }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: none; border-radius: 10px; padding: 10px 18px;
+    font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: transform .1s, box-shadow .15s, opacity .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .6; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+    box-shadow: 0 4px 14px -6px rgba(99,102,241,.7);
+  }
+  .btn-primary:hover:not(:disabled) { box-shadow: 0 6px 18px -6px rgba(99,102,241,.8); }
+  .btn-outline { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: #fff; color: var(--danger); border: 1px solid #fecaca; }
+  .btn-sm { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
+  /* ---------- Metrics ---------- */
+  .metric { text-align: center; padding: 18px 10px; }
+  .metric .value { font-size: 34px; font-weight: 800; letter-spacing: -1px; }
+  .metric .label { color: var(--muted); font-size: 12.5px; font-weight: 600; margin-top: 4px; }
+  .metric .sub { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  /* ---------- Status / run ---------- */
+  .run-status { display: flex; align-items: center; gap: 14px; padding: 4px 0 2px; }
+  .spinner {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 4px solid #e0e7ff; border-top-color: var(--accent);
+    animation: spin .8s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .steps { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--muted); }
+  .step .step-dot { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; border: 2px solid var(--border); background: #fff; flex-shrink: 0; }
+  .step.active { color: var(--text); font-weight: 600; }
+  .step.active .step-dot { border-color: var(--accent); color: var(--accent); animation: pulse 1.1s infinite; }
+  .step.done .step-dot { border-color: var(--success); color: var(--success); background: #ecfdf5; }
+  .step.error .step-dot { border-color: var(--danger); color: var(--danger); background: #fef2f2; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  }
+  .badge.success { background: #ecfdf5; color: #059669; }
+  .badge.failed { background: #fef2f2; color: #dc2626; }
+  .badge.running { background: #eef2ff; color: #4f46e5; }
+  .badge.skipped { background: #f3f4f6; color: #6b7280; }
+  .kv { display: grid; grid-template-columns: 120px 1fr; gap: 6px 14px; font-size: 13.5px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { font-weight: 600; word-break: break-word; }
+  .error-box {
+    margin-top: 14px; padding: 12px 14px; border-radius: 10px;
+    background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-size: 13px;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .alert {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 14px; border-radius: 10px; font-size: 13.5px;
+    background: #fefce8; border: 1px solid #fde68a; color: #854d0e;
+  }
+  .alert a { color: var(--accent); font-weight: 600; cursor: pointer; }
+  /* ---------- Report ---------- */
+  .issue { padding: 10px 12px; border-left: 4px solid var(--info); background: #f8fafc; border-radius: 0 8px 8px 0; margin-bottom: 8px; font-size: 13.5px; }
+  .issue .issue-file { font-weight: 700; font-size: 12.5px; color: var(--muted); display: block; margin-bottom: 2px; }
+  .issue.critical { border-left-color: var(--danger); background: #fef2f2; }
+  .issue.warning { border-left-color: var(--warn); background: #fffbeb; }
+  .issue.info { border-left-color: var(--info); background: #eff6ff; }
+  ul.recs { padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .placeholder {
+    text-align: center; padding: 48px 20px; color: var(--muted);
+    border: 2px dashed var(--border); border-radius: var(--radius);
+  }
+  .placeholder .big { font-size: 34px; margin-bottom: 8px; }
+  .placeholder strong { color: var(--text); }
+  /* ---------- Tables ---------- */
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: #f9fafb; }
+  .repo-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13.5px; }
+  /* ---------- Toast ---------- */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #111827; color: #fff; padding: 12px 20px; border-radius: 12px;
+    font-size: 13.5px; font-weight: 600; opacity: 0; pointer-events: none;
+    transition: all .25s ease; z-index: 100; box-shadow: 0 10px 30px -10px rgba(0,0,0,.5);
+    max-width: 90vw;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.error { background: #dc2626; }
+  #toast.success { background: #059669; }
+  .footer-note { text-align: center; color: var(--muted); font-size: 12px; padding: 20px 0 0; }
+</style>
 </head>
-
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <div class="header-left">
-                <div class="icon-box">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
-                </div>
-                <div>
-                    <h1>AI Code Report Generator</h1>
-                    <p class="subtitle">Automated daily code analysis & reporting</p>
-                </div>
-            </div>
-            <div class="status-badge">
-                <div class="status-dot"></div>
-                <span>Active</span>
-            </div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-logo">&#9889;</div>
+    <div>
+      <h1>Code Report Generator</h1>
+      <small>AI-powered repository analysis</small>
+    </div>
+  </div>
+  <div class="head-right">
+    <span id="schedulePill" class="pill"></span>
+    <span id="statusPill" class="pill">Loading&hellip;</span>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab-btn active" data-tab="configure">Configure</button>
+  <button class="tab-btn" data-tab="analyze">Run Analysis</button>
+  <button class="tab-btn" data-tab="reports">Reports</button>
+  <button class="tab-btn" data-tab="history">History</button>
+</nav>
+
+<main class="wrap">
+
+  <!-- ============ CONFIGURE ============ -->
+  <section id="tab-configure" class="tab active">
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>Repository</h2>
+        <p class="hint">GitHub URLs are downloaded as archives &mdash; no git required.</p>
+        <label for="repoUrl">Repository URL</label>
+        <input id="repoUrl" type="text" placeholder="https://github.com/owner/repo" />
+        <div class="row-2">
+          <div>
+            <label for="branch">Branch</label>
+            <input id="branch" type="text" value="main" />
+          </div>
+          <div>
+            <label for="model">AI Model</label>
+            <select id="model">
+              <option value="gemini-flash-latest">Gemini Flash (default)</option>
+              <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro</option>
+            </select>
+          </div>
         </div>
-    </header>
-
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab active" data-tab="configure">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Configure</span>
-            </button>
-            <button class="tab" data-tab="analyze">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span>Analyze</span>
-            </button>
-            <button class="tab" data-tab="report">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>Report</span>
-            </button>
-            <button class="tab" data-tab="schedule">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>Schedule</span>
-            </button>
+      </div>
+      <div class="card">
+        <h2>Report Delivery</h2>
+        <p class="hint">A report email is sent to every recipient after each run.</p>
+        <label for="recipients">Recipient emails (comma-separated)</label>
+        <input id="recipients" type="text" placeholder="you@example.com, team@example.com" />
+        <div class="row-2">
+          <div>
+            <label for="frequency">Frequency</label>
+            <select id="frequency">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly (Mondays)</option>
+              <option value="biweekly">Biweekly (every other Monday)</option>
+            </select>
+          </div>
+          <div>
+            <label for="scheduleTime">Time</label>
+            <input id="scheduleTime" type="time" value="09:00" />
+          </div>
         </div>
+      </div>
+    </div>
+    <div style="margin-top:16px" class="grid grid-2">
+      <div class="card">
+        <h2>Scheduling</h2>
+        <p class="hint">How scheduled reports are delivered.</p>
+        <ul style="list-style:none; display:flex; flex-direction:column; gap:10px; font-size:13.5px;">
+          <li>&#10003; <strong>Local / VPS</strong> &mdash; the built-in scheduler runs in-process at your chosen time.</li>
+          <li>&#10003; <strong>Vercel</strong> &mdash; a Cron Job pings the app every 15 minutes; it runs only when your schedule is due. Protected by <code>CRON_SECRET</code>.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Save Configuration</h2>
+        <p class="hint">Used by both manual runs and scheduled reports.</p>
+        <button class="btn btn-primary" id="saveConfigBtn">Save Configuration</button>
+        <p class="muted" style="margin-top:12px" id="configSavedAt"></p>
+      </div>
+    </div>
+  </section>
 
-        <!-- Configure Content -->
-        <div id="configure" class="content active">
-            <div class="grid grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <svg fill="none" stroke="#000000" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <h2>Repository Settings</h2>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Repository URL</label>
-                        <input type="text" class="form-input" id="repoUrl"
-                            placeholder="https://github.com/username/repository">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Branch</label>
-                        <input type="text" class="form-input" id="branch" value="main">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Analysis Model</label>
-                        <select class="form-select" id="model">
-                            <option value="gemini1.5flash">Gemini 1.5 Flash</option>
-                            <option value="gemini1.5pro">Gemini 1.5 Pro</option>
-                            <option value="claude-sonnet">Claude Sonnet</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <svg fill="none" stroke="#000000" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        <h2>Email Settings</h2>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Recipients (comma-separated)</label>
-                        <textarea class="form-textarea" id="recipients" rows="3"
-                            placeholder="dev@company.com, manager@company.com"></textarea>
-                    </div>
-                    <div class="grid grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Time</label>
-                            <input type="time" class="form-input" id="scheduleTime" value="09:00">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Frequency</label>
-                            <select class="form-select" id="frequency">
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="biweekly">Bi-weekly</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Analyze Content -->
-        <div id="analyze" class="content">
-            <div class="card">
-                <div class="analyze-section">
-                    <div class="analyze-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </div>
-                    <h2 class="analyze-title">Run Code Analysis</h2>
-                    <p class="analyze-description">
-                        Analyze your codebase using AI-powered static analysis to identify issues, complexity, and
-                        quality metrics.
-                    </p>
-
-                    <div id="analyzeButton">
-                        <button class="btn btn-primary" onclick="startAnalysis()">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Start Analysis</span>
-                        </button>
-                    </div>
-
-                    <div id="progressSection" class="hidden">
-                        <div class="progress-container">
-                            <div class="progress-header">
-                                <span class="progress-badge">Analyzing</span>
-                                <span class="progress-percent" id="progressPercent">0%</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="loading-dots">
-                            <div class="dot"></div>
-                            <div class="dot"></div>
-                            <div class="dot"></div>
-                        </div>
-                    </div>
-
-                    <div id="successSection" class="hidden">
-                        <div class="success-box">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <h3 class="success-title">Analysis Complete!</h3>
-                            <p class="success-text">Your report is ready. Check the Report tab to view details.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Report Content -->
-        <div id="report" class="content">
-            <div class="grid grid-4">
-                <div class="metric-card bg-red">
-                    <div class="metric-card-header">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <span class="metric-value" id="criticalCount">0</span>
-                    </div>
-                    <h3 class="metric-title">Critical Issues</h3>
-                    <p class="metric-subtitle">Requires immediate attention</p>
-                </div>
-
-                <div class="metric-card bg-yellow">
-                    <div class="metric-card-header">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <span class="metric-value" id="warningCount">0</span>
-                    </div>
-                    <h3 class="metric-title">Warnings</h3>
-                    <p class="metric-subtitle">Should be addressed soon</p>
-                </div>
-
-                <div class="metric-card bg-blue">
-                    <div class="metric-card-header">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                        <span class="metric-value" id="complexityScore">0</span>
-                    </div>
-                    <h3 class="metric-title">Complexity Score</h3>
-                    <p class="metric-subtitle">Average cyclomatic complexity</p>
-                </div>
-
-                <div class="metric-card bg-green">
-                    <div class="metric-card-header">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span class="metric-value" id="qualityScore">0%</span>
-                    </div>
-                    <h3 class="metric-title">Code Quality</h3>
-                    <p class="metric-subtitle">Overall quality rating</p>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 24px;">
-                <h2 style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 24px;">Analysis Summary
-                </h2>
-                <div>
-                    <div class="summary-item" style="border-left-color: #4f46e5;">
-                        <h3>Code Structure</h3>
-                        <p>Well-organized modules with clear separation of concerns. Consider refactoring legacy
-                            components.</p>
-                    </div>
-                    <div class="summary-item" style="border-left-color: #7c3aed;">
-                        <h3>Security</h3>
-                        <p>No critical vulnerabilities detected. Update dependencies to patch minor security issues.</p>
-                    </div>
-                    <div class="summary-item" style="border-left-color: #ec4899;">
-                        <h3>Performance</h3>
-                        <p>Optimize database queries in user service. Consider implementing caching for frequently
-                            accessed data.</p>
-                    </div>
-                </div>
-
-                <div class="btn-group">
-                    <button class="btn btn-primary">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        <span>Download PDF</span>
-                    </button>
-                    <button class="btn btn-secondary">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                        <span>Send Email</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schedule Content -->
-        <div id="schedule" class="content">
-            <div class="card">
-                <div class="card-header">
-                    <svg fill="none" stroke="#000000" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h2>Automated Schedule</h2>
-                </div>
-
-                <div class="schedule-card">
-                    <div class="schedule-header">
-                        <div>
-                            <h3 style="font-size: 18px; font-weight: bold; color: #1f2937;">Daily Report Schedule</h3>
-                            <p style="color: #6b7280; font-size: 14px;">Automatic analysis and email delivery</p>
-                        </div>
-                        <div class="schedule-status">Active</div>
-                    </div>
-                    <div class="schedule-grid">
-                        <div class="schedule-info">
-                            <span class="schedule-label">Frequency</span>
-                            <p class="schedule-value" id="displayFrequency">Daily</p>
-                        </div>
-                        <div class="schedule-info">
-                            <span class="schedule-label">Time</span>
-                            <p class="schedule-value" id="displayTime">09:00</p>
-                        </div>
-                        <div class="schedule-info">
-                            <span class="schedule-label">Recipients</span>
-                            <p class="schedule-value" id="displayRecipients">0 people</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="report-list">
-                    <h3>Recent Reports</h3>
-                    <div id="recentReportsList">
-                        <!-- Reports will be loaded here dynamically -->
-                        <div class="schedule-info" style="text-align: center; padding: 20px;">Loading reports...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- ============ ANALYZE ============ -->
+  <section id="tab-analyze" class="tab">
+    <div id="analyzeNoConfig" class="alert" style="display:none; margin-bottom:16px;">
+      <span>&#9888;&#65039;</span>
+      <span>No repository configured yet. <a data-goto="configure">Open Configure</a> to set your repository and recipients first.</span>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <p style="color: #6b7280;">© 2026 AI Code Report Generator. Powered by Gemini 1.5 Flash</p>
-            <div class="footer-links">
-                <a href="#" class="footer-link">Documentation</a>
-                <a href="#" class="footer-link">Support</a>
-                <a href="#" class="footer-link">API</a>
-            </div>
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div>
+          <h2>Run a manual analysis</h2>
+          <p class="hint">Fetches the repository, analyzes it with Gemini, saves the report, and emails the recipients.</p>
         </div>
-    </footer>
+        <button class="btn btn-primary" id="runBtn" style="padding:12px 24px; font-size:15px;">&#9654; Run Analysis</button>
+      </div>
 
-    <script>
-        // API Base URL
-        const API_BASE = '';
+      <div id="runProgress" style="display:none; margin-top:20px; border-top:1px solid var(--border); padding-top:20px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div class="spinner"></div>
+          <div>
+            <div style="font-weight:700; font-size:14px;" id="progressTitle">Starting analysis&hellip;</div>
+            <div class="muted">This can take a minute or two. Keep this tab open.</div>
+          </div>
+        </div>
+        <div class="steps" id="progressSteps">
+          <div class="step active" data-step="fetch"><span class="step-dot">1</span> Fetching repository</div>
+          <div class="step" data-step="analyze"><span class="step-dot">2</span> Analyzing code with Gemini</div>
+          <div class="step" data-step="save"><span class="step-dot">3</span> Saving report</div>
+          <div class="step" data-step="email"><span class="step-dot">4</span> Sending report email</div>
+        </div>
+      </div>
 
-        // Load configuration on page load
-        window.addEventListener('DOMContentLoaded', async () => {
-            await loadConfiguration();
-            await loadLatestReport();
-            await loadRecentReports();
-        });
+      <div id="runResult" style="margin-top:20px;"></div>
+    </div>
 
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
+    <div class="card" style="margin-top:16px;">
+      <h2>Current Status</h2>
+      <p class="hint">The most recent run and its outcome.</p>
+      <div id="statusBody"><div class="empty-state">Loading status&hellip;</div></div>
+    </div>
+  </section>
 
-                // Update tab active states
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
+  <!-- ============ REPORTS ============ -->
+  <section id="tab-reports" class="tab">
+    <div id="reportBody">
+      <div class="card"><div class="empty-state">Loading&hellip;</div></div>
+    </div>
+  </section>
 
-                // Update content visibility
-                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-                document.getElementById(tabName).classList.add('active');
+  <!-- ============ HISTORY ============ -->
+  <section id="tab-history" class="tab">
+    <div class="grid-2 grid" style="grid-template-columns:1fr 1fr; align-items:start;">
+      <div class="card">
+        <h2>Run History</h2>
+        <p class="hint">Every manual, scheduled, and cron-triggered run.</p>
+        <div id="runsBody"><div class="empty-state">Loading&hellip;</div></div>
+      </div>
+      <div class="card">
+        <h2>Recent Reports</h2>
+        <p class="hint">Generated analysis reports.</p>
+        <div id="reportsBody"><div class="empty-state">Loading&hellip;</div></div>
+      </div>
+    </div>
+  </section>
 
-                // Load specific data based on tab
-                if (tabName === 'report') {
-                    loadLatestReport();
-                } else if (tabName === 'schedule') {
-                    loadRecentReports();
-                }
-            });
-        });
+  <p class="footer-note">Code Report Generator &middot; Powered by Gemini</p>
+</main>
 
-        // Load configuration from API
-        async function loadConfiguration() {
-            try {
-                const response = await fetch(`${API_BASE}/api/config/`);
-                if (response.ok) {
-                    const config = await response.json();
-                    if (config) {
-                        document.getElementById('repoUrl').value = config.repo_url || '';
-                        document.getElementById('branch').value = config.branch || 'main';
-                        document.getElementById('model').value = config.analysis_model || 'gemini1.5flash';
-                        document.getElementById('recipients').value = config.recipients || '';
-                        document.getElementById('scheduleTime').value = config.schedule_time || '09:00';
-                        document.getElementById('frequency').value = config.frequency || 'daily';
+<div id="toast"></div>
 
-                        // Update schedule display
-                        updateScheduleDisplay();
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to load configuration:', error);
-            }
-        }
+<script>
+  const $ = id => document.getElementById(id);
 
-        // Save configuration
-        async function saveConfiguration() {
-            const config = {
-                repo_url: document.getElementById('repoUrl').value,
-                branch: document.getElementById('branch').value,
-                analysis_model: document.getElementById('model').value,
-                recipients: document.getElementById('recipients').value,
-                schedule_time: document.getElementById('scheduleTime').value,
-                frequency: document.getElementById('frequency').value
-            };
+  /* ---------- helpers ---------- */
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function fmtDate(iso) {
+    if (!iso) return '&mdash;';
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+  function duration(a, b) {
+    if (!a || !b) return '&mdash;';
+    const s = Math.round((new Date(b) - new Date(a)) / 1000);
+    if (s < 60) return s + 's';
+    return Math.round(s / 60) + 'm ' + (s % 60) + 's';
+  }
+  function toast(msg, type) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'show ' + (type || '');
+    setTimeout(() => { t.className = ''; }, 3500);
+  }
+  async function api(path, opts) {
+    const res = await fetch(path, opts);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.detail || body.error || ('Request failed (' + res.status + ')'));
+    return body;
+  }
+  const severityClass = sev => (sev === 'critical' ? 'critical' : sev === 'warning' ? 'warning' : 'info');
+  const runBadge = status => {
+    const map = { success: 'success', failed: 'failed', running: 'running', already_running: 'running', skipped: 'skipped' };
+    return '<span class="badge ' + (map[status] || 'skipped') + '">' + esc(status || 'unknown') + '</span>';
+  };
 
-            try {
-                const response = await fetch(`${API_BASE}/api/config/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(config)
-                });
+  /* ---------- tabs ---------- */
+  $('tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    $('tab-' + btn.dataset.tab).classList.add('active');
+  });
+  document.addEventListener('click', e => {
+    const goto = e.target.closest('[data-goto]');
+    if (!goto) return;
+    document.querySelector('.tab-btn[data-tab="' + goto.dataset.goto + '"]').click();
+  });
 
-                if (response.ok) {
-                    alert('Configuration saved successfully!');
-                    updateScheduleDisplay();
-                } else {
-                    alert('Failed to save configuration');
-                }
-            } catch (error) {
-                console.error('Failed to save configuration:', error);
-                alert('Failed to save configuration');
-            }
-        }
+  /* ---------- configure ---------- */
+  async function loadConfig() {
+    const cfg = await api('/api/config/');
+    if (!cfg) return;
+    $('repoUrl').value = cfg.repo_url || '';
+    $('branch').value = cfg.branch || 'main';
+    $('model').value = cfg.analysis_model || 'gemini-flash-latest';
+    $('recipients').value = cfg.recipients || '';
+    $('frequency').value = cfg.frequency || 'daily';
+    $('scheduleTime').value = cfg.schedule_time || '09:00';
+    $('configSavedAt').textContent = 'Configuration loaded.';
+  }
 
-        // Add save button to configuration section
-        const configCard = document.querySelector('#configure .grid');
-        const saveButton = document.createElement('button');
-        saveButton.className = 'btn btn-primary';
-        saveButton.style.marginTop = '24px';
-        saveButton.innerHTML = '<span>Save Configuration</span>';
-        saveButton.onclick = saveConfiguration;
-        configCard.parentElement.appendChild(saveButton);
+  $('saveConfigBtn').addEventListener('click', async () => {
+    const payload = {
+      repo_url: $('repoUrl').value.trim(),
+      branch: $('branch').value.trim() || 'main',
+      analysis_model: $('model').value,
+      recipients: $('recipients').value.trim(),
+      schedule_time: $('scheduleTime').value || '09:00',
+      frequency: $('frequency').value
+    };
+    if (!payload.repo_url) { toast('Please enter a repository URL', 'error'); return; }
+    try {
+      await api('/api/config/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      toast('Configuration saved', 'success');
+      $('configSavedAt').textContent = 'Saved at ' + new Date().toLocaleTimeString();
+      refreshAll();
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  });
 
-        // Analysis functionality
-        let progressInterval;
+  /* ---------- analyze ---------- */
+  const steps = ['fetch', 'analyze', 'save', 'email'];
+  let running = false;
 
-        async function startAnalysis() {
-            document.getElementById('analyzeButton').classList.add('hidden');
-            document.getElementById('progressSection').classList.remove('hidden');
-            document.getElementById('successSection').classList.add('hidden');
+  function setStep(idx) {
+    steps.forEach((s, i) => {
+      const el = document.querySelector('.step[data-step="' + s + '"]');
+      el.classList.remove('active', 'done', 'error');
+      if (i < idx) el.classList.add('done');
+      if (i === idx) el.classList.add('active');
+    });
+    return idx;
+  }
+  function markStepError(s) {
+    steps.forEach(el => document.querySelector('.step[data-step="' + el + '"]').classList.remove('active'));
+    document.querySelector('.step[data-step="' + s + '"]').classList.add('error');
+  }
 
-            // Simulate progress
-            let progress = 0;
-            progressInterval = setInterval(() => {
-                progress += 2;
-                document.getElementById('progressFill').style.width = progress + '%';
-                document.getElementById('progressPercent').textContent = progress + '%';
+  $('runBtn').addEventListener('click', async () => {
+    if (running) return;
+    running = true;
+    $('runBtn').disabled = true;
+    $('runBtn').innerHTML = '&#8987; Running&hellip;';
+    $('runProgress').style.display = 'block';
+    $('runResult').innerHTML = '';
+    setStep(0);
+    const timers = [6000, 30000, 45000].map((ms, i) => setTimeout(() => setStep(i + 1), ms));
 
-                if (progress >= 100) {
-                    clearInterval(progressInterval);
-                }
-            }, 100);
+    try {
+      const result = await api('/api/analyze/now', { method: 'POST' });
+      clearTimers(timers);
+      steps.forEach(el => document.querySelector('.step[data-step="' + el + '"]').classList.remove('active'));
+      steps.forEach(el => document.querySelector('.step[data-step="' + el + '"]').classList.add('done'));
 
-            try {
-                // Trigger analysis via API
-                const response = await fetch(`${API_BASE}/api/analyze/now`, {
-                    method: 'POST'
-                });
+      if (result.status === 'success') {
+        $('runResult').innerHTML =
+          '<div class="alert" style="background:#ecfdf5; border-color:#a7f3d0; color:#065f46;">' +
+          '&#10003; Analysis complete. Report #' + result.report_id + ' saved' +
+          (result.email_sent ? ' and emailed to ' + result.recipients + ' recipient(s).' : ', but no email was sent (check recipients/SMTP).') +
+          '</div>';
+        toast('Analysis complete', 'success');
+      } else {
+        $('runResult').innerHTML = '<div class="error-box">' + esc(result.error || 'Analysis failed.') + '</div>';
+        markStepError('fetch');
+        toast('Analysis failed', 'error');
+      }
+      refreshAll();
+    } catch (err) {
+      clearTimers(timers);
+      markStepError('fetch');
+      $('runResult').innerHTML = '<div class="error-box">' + esc(err.message) + '</div>';
+      toast(err.message, 'error');
+    } finally {
+      running = false;
+      $('runBtn').disabled = false;
+      $('runBtn').innerHTML = '&#9654; Run Analysis';
+    }
+  });
+  function clearTimers(ts) { ts.forEach(clearTimeout); }
 
-                if (response.ok) {
-                    // Wait a bit for analysis to complete
-                    setTimeout(async () => {
-                        clearInterval(progressInterval);
-                        document.getElementById('progressFill').style.width = '100%';
-                        document.getElementById('progressPercent').textContent = '100%';
+  function renderStatusBody(status) {
+    const run = status.last_run;
+    if (!run) {
+      $('statusBody').innerHTML = '<div class="empty-state">No runs yet. Click <strong>Run Analysis</strong> to generate your first report.</div>';
+      return;
+    }
+    $('statusBody').innerHTML =
+      '<div class="run-status">' + runBadge(run.status) +
+      '<span class="muted">' + (run.status === 'running' ? 'Started ' + fmtDate(run.started_at) : 'Ran ' + fmtDate(run.finished_at || run.started_at)) + ' &middot; took ' + duration(run.started_at, run.finished_at) + '</span></div>' +
+      '<dl class="kv" style="margin-top:14px;">' +
+      '<dt>Repository</dt><dd>' + esc(run.repo_url || status.repo_url || '&mdash;') + '</dd>' +
+      '<dt>Branch</dt><dd>' + esc(run.branch || status.branch || '&mdash;') + '</dd>' +
+      '<dt>Recipients</dt><dd>' + (status.recipients.length ? esc(status.recipients.join(', ')) : '<span class="muted">None configured</span>') + '</dd>' +
+      '<dt>Email</dt><dd>' + (run.email_sent ? 'Sent' : '<span class="muted">Not sent</span>') + '</dd>' +
+      (run.report_id ? '<dt>Report</dt><dd>#' + run.report_id + '</dd>' : '') +
+      '</dl>' +
+      (run.error_message ? '<div class="error-box">' + esc(run.error_message) + '</div>' : '');
+  }
 
-                        setTimeout(() => {
-                            document.getElementById('progressSection').classList.add('hidden');
-                            document.getElementById('successSection').classList.remove('hidden');
-                            loadLatestReport();
-                        }, 500);
-                    }, 5000); // Wait 5 seconds for analysis
-                } else {
-                    clearInterval(progressInterval);
-                    alert('Failed to start analysis. Please check your configuration.');
-                    document.getElementById('progressSection').classList.add('hidden');
-                    document.getElementById('analyzeButton').classList.remove('hidden');
-                }
-            } catch (error) {
-                clearInterval(progressInterval);
-                console.error('Analysis failed:', error);
-                alert('Analysis failed. Please try again.');
-                document.getElementById('progressSection').classList.add('hidden');
-                document.getElementById('analyzeButton').classList.remove('hidden');
-            }
-        }
+  /* ---------- reports ---------- */
+  function renderReport(report) {
+    if (!report) {
+      $('reportBody').innerHTML =
+        '<div class="card"><div class="placeholder"><div class="big">&#128202;</div>' +
+        '<strong>No report yet.</strong><br/>Run an analysis to generate a report.</div></div>';
+      return;
+    }
+    const f = report.full_report || {};
+    const m = f.metrics || {};
+    const issues = f.issues || [];
+    const recs = f.recommendations || [];
 
-        // Load latest report
-        async function loadLatestReport() {
-            try {
-                const response = await fetch(`${API_BASE}/api/reports/latest`);
-                if (response.ok) {
-                    const report = await response.json();
-                    if (report) {
-                        document.getElementById('criticalCount').textContent = report.critical_count;
-                        document.getElementById('warningCount').textContent = report.warning_count;
-                        document.getElementById('complexityScore').textContent = report.complexity_score;
-                        document.getElementById('qualityScore').textContent = report.quality_score + '%';
+    let issuesHtml = issues.length
+      ? issues.map(i =>
+          '<div class="issue ' + severityClass(i.severity) + '">' +
+          '<span class="issue-file">' + esc(i.file || 'general') +
+          ' &middot; ' + esc(i.severity || 'info') + '</span>' +
+          esc(i.description || '') + '</div>').join('')
+      : '<p class="muted">No issues reported.</p>';
 
-                        // Update summary if available
-                        if (report.full_report && report.full_report.issues) {
-                            updateSummary(report.full_report);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to load report:', error);
-            }
-        }
+    let recsHtml = recs.length
+      ? '<ul class="recs">' + recs.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul>'
+      : '<p class="muted">No recommendations.</p>';
 
-        // Update summary section with real data
-        function updateSummary(fullReport) {
-            const summaryContainer = document.querySelector('#report .card > div');
-            if (!fullReport.recommendations) return;
+    $('reportBody').innerHTML =
+      '<div class="card">' +
+      '<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px;">' +
+      '<div><h2>Latest Report</h2><p class="hint">' + esc(report.repo_url || '') + ' &middot; generated ' + fmtDate(report.timestamp) + ' &middot; #' + report.id + '</p></div>' +
+      '<div style="display:flex; gap:8px;">' +
+      '<button class="btn btn-outline btn-sm" id="downloadBtn">&#11015; Download</button>' +
+      '<button class="btn btn-primary btn-sm" id="emailBtn">&#9993; Send Email</button>' +
+      '</div></div>' +
+      '<div class="grid grid-4">' +
+      '<div class="card metric"><div class="value" style="color:var(--danger)">' + (m.critical ?? report.critical_count ?? 0) + '</div><div class="label">Critical Issues</div></div>' +
+      '<div class="card metric"><div class="value" style="color:var(--warn)">' + (m.warnings ?? report.warning_count ?? 0) + '</div><div class="label">Warnings</div></div>' +
+      '<div class="card metric"><div class="value" style="color:var(--info)">' + (m.complexity ?? report.complexity_score ?? 0) + '</div><div class="label">Complexity</div><div class="sub">out of 100</div></div>' +
+      '<div class="card metric"><div class="value" style="color:var(--success)">' + (m.quality_score ?? report.quality_score ?? 0) + '%</div><div class="label">Quality Score</div></div>' +
+      '</div>' +
+      '<div style="margin-top:20px;"><div class="section-title">&#128221; Summary</div><p style="font-size:14px; line-height:1.6;">' + esc(f.summary || report.summary || 'No summary available.') + '</p></div>' +
+      '<div style="margin-top:20px;"><div class="section-title">&#9888;&#65039; Issues Found (' + issues.length + ')</div>' + issuesHtml + '</div>' +
+      '<div style="margin-top:20px;"><div class="section-title">&#128161; Recommendations</div>' + recsHtml + '</div>' +
+      '</div>';
 
-            // Keep the existing structure but could enhance with real data
-            // For now, just log that we have the data
-            console.log('Full report loaded:', fullReport);
-        }
+    $('emailBtn').addEventListener('click', async () => {
+      try {
+        const res = await api('/api/analyze/send-email', { method: 'POST' });
+        toast('Report emailed to ' + res.recipients + ' recipient(s)', 'success');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+    $('downloadBtn').addEventListener('click', () => {
+      const text =
+        'CODE ANALYSIS REPORT\n====================\n' +
+        'Repository: ' + report.repo_url + '\n' +
+        'Generated: ' + new Date(report.timestamp).toLocaleString() + '\n\n' +
+        'Summary:\n' + (f.summary || report.summary || '') + '\n\n' +
+        'Metrics:\n  Critical: ' + (m.critical ?? report.critical_count ?? 0) + '\n  Warnings: ' + (m.warnings ?? report.warning_count ?? 0) + '\n  Complexity: ' + (m.complexity ?? report.complexity_score ?? 0) + '\n  Quality: ' + (m.quality_score ?? report.quality_score ?? 0) + '%\n\n' +
+        'Issues:\n' + issues.map(i => '  [' + (i.severity || 'info') + '] ' + (i.file || '') + ': ' + (i.description || '')).join('\n') + '\n\n' +
+        'Recommendations:\n' + recs.map(r => '  - ' + r).join('\n') + '\n';
+      const blob = new Blob([text], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'code-report-' + report.id + '.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast('Report downloaded', 'success');
+    });
+  }
 
-        // Update schedule display
-        function updateScheduleDisplay() {
-            const frequency = document.getElementById('frequency').value;
-            const time = document.getElementById('scheduleTime').value;
-            const recipients = document.getElementById('recipients').value;
+  async function loadReports() {
+    try {
+      const latest = await api('/api/reports/latest');
+      renderReport(latest);
+    } catch (err) {
+      $('reportBody').innerHTML = '<div class="card"><div class="error-box">' + esc(err.message) + '</div></div>';
+    }
+  }
 
-            document.getElementById('displayFrequency').textContent =
-                frequency.charAt(0).toUpperCase() + frequency.slice(1);
-            document.getElementById('displayTime').textContent = time;
+  /* ---------- history ---------- */
+  async function loadHistory() {
+    try {
+      const [runs, reports] = await Promise.all([api('/api/analyze/runs'), api('/api/reports/')]);
+      $('runsBody').innerHTML = runs.length ? (
+        '<div style="overflow-x:auto;"><table>' +
+        '<thead><tr><th>Status</th><th>Started</th><th>Duration</th><th>Email</th><th>Report</th></tr></thead><tbody>' +
+        runs.map(r =>
+          '<tr><td>' + runBadge(r.status) + (r.status === 'failed' && r.error_message ? '<div class="muted" style="margin-top:4px; font-size:11.5px;">' + esc(r.error_message).slice(0, 90) + '&hellip;</div>' : '') + '</td>' +
+          '<td>' + fmtDate(r.started_at) + '</td>' +
+          '<td>' + duration(r.started_at, r.finished_at) + '</td>' +
+          '<td>' + (r.email_sent ? '&#10003;' : '&mdash;') + '</td>' +
+          '<td>' + (r.report_id ? '<span class="badge skipped">#' + r.report_id + '</span>' : '&mdash;') + '</td></tr>'
+        ).join('') +
+        '</tbody></table></div>'
+      ) : '<div class="empty-state">No runs yet.</div>';
 
-            const count = recipients.split(',').filter(r => r.trim()).length;
-            document.getElementById('displayRecipients').textContent = count + ' people';
-        }
+      $('reportsBody').innerHTML = reports.length ? (
+        '<div style="overflow-x:auto;"><table>' +
+        '<thead><tr><th>Report</th><th>Repo</th><th>Quality</th><th>Generated</th></tr></thead><tbody>' +
+        reports.map(rp =>
+          '<tr>' +
+          '<td><span class="badge skipped">#' + rp.id + '</span></td>' +
+          '<td class="repo-cell" title="' + esc(rp.repo_url || '') + '">' + esc(rp.repo_url || '') + '</td>' +
+          '<td>' + (rp.quality_score || 0) + '%</td>' +
+          '<td>' + fmtDate(rp.timestamp) + '</td></tr>'
+        ).join('') +
+        '</tbody></table></div>'
+      ) : '<div class="empty-state">No reports yet.</div>';
+    } catch (err) {
+      $('runsBody').innerHTML = '<div class="error-box">' + esc(err.message) + '</div>';
+    }
+  }
 
-        // Update schedule display when inputs change
-        document.getElementById('frequency').addEventListener('change', updateScheduleDisplay);
-        document.getElementById('scheduleTime').addEventListener('change', updateScheduleDisplay);
-        document.getElementById('recipients').addEventListener('input', updateScheduleDisplay);
+  /* ---------- global status ---------- */
+  async function loadStatus() {
+    try {
+      const status = await api('/api/analyze/status');
 
-        // Load recent reports for schedule page
-        async function loadRecentReports() {
-            const listContainer = document.getElementById('recentReportsList');
-            if (!listContainer) return;
+      const sPill = $('statusPill');
+      const run = status.last_run;
+      if (run && run.status === 'running') {
+        sPill.className = 'pill busy';
+        sPill.innerHTML = '<span class="dot"></span>Analysis running&hellip;';
+      } else if (run && run.status === 'success') {
+        sPill.className = 'pill good';
+        sPill.innerHTML = '<span class="dot"></span>Last run: success';
+      } else if (run && run.status === 'failed') {
+        sPill.className = 'pill bad';
+        sPill.innerHTML = '<span class="dot"></span>Last run: failed';
+      } else {
+        sPill.className = 'pill warn';
+        sPill.innerHTML = '<span class="dot"></span>No runs yet';
+      }
 
-            try {
-                const response = await fetch(`${API_BASE}/api/reports/?limit=5`);
-                if (response.ok) {
-                    const reports = await response.json();
+      const schPill = $('schedulePill');
+      if (status.configured) {
+        schPill.className = 'pill good';
+        schPill.innerHTML = '<span class="dot"></span>' + esc(status.frequency) + ' &middot; ' + esc(status.schedule_time);
+      } else {
+        schPill.className = 'pill warn';
+        schPill.innerHTML = '<span class="dot"></span>Not configured';
+      }
 
-                    if (reports.length === 0) {
-                        listContainer.innerHTML = '<div class="schedule-info" style="text-align: center; padding: 20px; color: #6b7280;">No reports found yet.</div>';
-                        return;
-                    }
+      $('analyzeNoConfig').style.display = status.configured ? 'none' : 'flex';
+      $('runBtn').style.display = status.configured ? '' : 'none';
 
-                    let html = '';
-                    reports.forEach(report => {
-                        const date = new Date(report.timestamp);
-                        // Format: "Feb 17, 10:30 PM"
-                        const dateStr = date.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric'
-                        }) + ', ' + date.toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit'
-                        });
+      if (document.querySelector('#tab-analyze.active')) renderStatusBody(status);
+    } catch (err) {
+      $('statusPill').className = 'pill bad';
+      $('statusPill').innerHTML = '<span class="dot"></span>API unavailable';
+    }
+  }
 
-                        // Determine status/color based on critical issues
-                        const hasIssues = report.critical_count > 0;
-                        const iconColor = hasIssues ? '#ef4444' : '#10b981'; // Red for issues, green for clean
+  /* re-render status when switching to the analyze tab */
+  $('tabs').addEventListener('click', e => {
+    if (e.target.closest('[data-tab="analyze"]')) refreshAll();
+  });
 
-                        html += `
-                        <div class="report-item">
-                            <div class="report-item-left">
-                                <svg fill="none" stroke="${iconColor}" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <div>
-                                    <span class="report-item-date" style="display:block; font-weight:600;">${dateStr}</span>
-                                    <span style="font-size:12px; color:${hasIssues ? '#ef4444' : '#6b7280'}">
-                                        ${report.critical_count} critical, ${report.warning_count} warnings
-                                    </span>
-                                </div>
-                            </div>
-                            <span class="report-item-link" onclick="viewReportDetail(${report.id})">View</span>
-                        </div>
-                        `;
-                    });
+  function refreshAll() {
+    loadStatus();
+    loadReports();
+    loadHistory();
+  }
 
-                    listContainer.innerHTML = html;
-                }
-            } catch (error) {
-                console.error('Failed to load recent reports:', error);
-                listContainer.innerHTML = '<div class="schedule-info" style="text-align: center; color: #ef4444;">Failed to load reports</div>';
-            }
-        }
-
-        // View specific report detail
-        async function viewReportDetail(reportId) {
-            try {
-                // Switch to report tab
-                document.querySelector('.tab[data-tab="report"]').click();
-
-                // Fetch specific report
-                const response = await fetch(`${API_BASE}/api/reports/${reportId}`);
-                if (response.ok) {
-                    const report = await response.json();
-                    if (report) {
-                        // Update metrics
-                        document.getElementById('criticalCount').textContent = report.critical_count;
-                        document.getElementById('warningCount').textContent = report.warning_count;
-                        document.getElementById('complexityScore').textContent = report.complexity_score;
-                        document.getElementById('qualityScore').textContent = report.quality_score + '%';
-
-                        // Update summary if available
-                        if (report.full_report && report.full_report.issues) {
-                            updateSummary(report.full_report);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to load report detail:', error);
-            }
-        }
-    </script>
+  /* ---------- init ---------- */
+  loadConfig().catch(() => {});
+  refreshAll();
+  setInterval(loadStatus, 15000);
+</script>
 </body>
-
 </html>
