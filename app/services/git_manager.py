@@ -2,7 +2,16 @@ import os
 import shutil
 import tempfile
 from typing import Optional, List, Tuple
-from git import Repo, GitCommandError
+
+try:
+    from git import Repo, GitCommandError
+except ImportError:
+    # GitPython raises ImportError at import time when the `git` executable is
+    # not available (e.g. on serverless platforms like Vercel). The app must
+    # still load; git operations fail only when actually invoked.
+    Repo = None
+    GitCommandError = Exception
+
 
 class GitManager:
     """Manages Git repository operations."""
@@ -35,6 +44,11 @@ class GitManager:
         Returns:
             tuple: (repo_path, is_new_clone)
         """
+        if Repo is None:
+            raise RuntimeError(
+                "Git is not available in this environment (the `git` executable "
+                "was not found). Repository cloning is disabled."
+            )
         repo_name = self.get_repo_name(url)
         repo_path = os.path.join(self.base_path, repo_name)
         
