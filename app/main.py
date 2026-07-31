@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -21,8 +22,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Global scheduler instance
-scheduler = ReportScheduler()
+# Serverless platforms (Vercel/Lambda) are ephemeral and cannot run background
+# schedulers, so the in-process scheduler is only started on long-running hosts.
+IS_SERVERLESS = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+
+# Global scheduler instance (created lazily in lifespan)
+scheduler = None
 
 
 @asynccontextmanager
@@ -34,23 +39,29 @@ async def lifespan(app: FastAPI):
         logger.info("Database initialized")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
-    
-    try:
-        scheduler.start()
-        db = SessionLocal()
+
+    global scheduler
+    if IS_SERVERLESS:
+        logger.info("Scheduler disabled: running on serverless platform")
+    else:
         try:
-            scheduler.schedule_job(db)
-        finally:
-            db.close()
-    except Exception as e:
-        logger.error(f"Error starting scheduler: {e}")
+            scheduler = ReportScheduler()
+            scheduler.start()
+            db = SessionLocal()
+            try:
+                scheduler.schedule_job(db)
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Error starting scheduler: {e}")
     
     yield
     
-    try:
-        scheduler.stop()
-    except Exception:
-        pass
+    if scheduler is not None:
+        try:
+            scheduler.stop()
+        except Exception:
+            pass
 
 
 # Create FastAPI app
@@ -81,7 +92,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "scheduler_running": scheduler.scheduler.running
+        "scheduler_running": bool(scheduler is not None and scheduler.scheduler.running)
     }
 
 

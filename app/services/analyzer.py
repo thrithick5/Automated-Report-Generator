@@ -9,9 +9,15 @@ class CodeAnalyzer:
     """Analyzes code using Google Gemini AI."""
     
     def __init__(self):
-        genai.configure(api_key=settings.gemini_api_key)
-        # Use gemini-flash-latest (stable Gemini 1.5 Flash) to avoid experimental quota issues
-        self.model = genai.GenerativeModel('gemini-flash-latest')
+        self.model = None
+        self._configured = False
+
+    def _ensure_configured(self):
+        if not self._configured:
+            genai.configure(api_key=settings.gemini_api_key)
+            # Use gemini-flash-latest (stable Gemini 1.5 Flash) to avoid experimental quota issues
+            self.model = genai.GenerativeModel('gemini-flash-latest')
+            self._configured = True
     
     def read_file_safely(self, file_path: str, max_size: int = 100000) -> str:
         """Read file content safely with size limit."""
@@ -56,6 +62,7 @@ class CodeAnalyzer:
         Returns:
             Dict containing analysis results with metrics and summary
         """
+        self._ensure_configured()
         code_summary = self.prepare_code_summary(repo_path)
         
         prompt = f"""You are a senior code reviewer. Analyze the following code repository and provide a structured assessment.
