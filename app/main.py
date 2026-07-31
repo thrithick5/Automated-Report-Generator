@@ -28,32 +28,29 @@ scheduler = ReportScheduler()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
-    # Startup
     logger.info("Starting application...")
-    init_db()
-    logger.info("Database initialized")
-    
-    # Display access URL
-    host = "localhost" if settings.app_host == "0.0.0.0" else settings.app_host
-    url = f"http://{host}:{settings.app_port}"
-    logger.info(f"Application running at: {url}")
-    print(f"\n Application running at: {url} \n")
-    
-    # Start scheduler
-    scheduler.start()
-    
-    # Schedule job if configuration exists
-    db = SessionLocal()
     try:
-        scheduler.schedule_job(db)
-    finally:
-        db.close()
+        init_db()
+        logger.info("Database initialized")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+    
+    try:
+        scheduler.start()
+        db = SessionLocal()
+        try:
+            scheduler.schedule_job(db)
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error starting scheduler: {e}")
     
     yield
     
-    # Shutdown
-    logger.info("Shutting down application...")
-    scheduler.stop()
+    try:
+        scheduler.stop()
+    except Exception:
+        pass
 
 
 # Create FastAPI app
