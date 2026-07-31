@@ -1,10 +1,8 @@
 import os
 import shutil
-from git import Repo, GitCommandError
-from typing import Optional
-
-
 import tempfile
+from typing import Optional, List, Tuple
+from git import Repo, GitCommandError
 
 class GitManager:
     """Manages Git repository operations."""
@@ -30,7 +28,7 @@ class GitManager:
             name = name[:-4]
         return name
     
-    def clone_or_pull(self, url: str, branch: str = "main") -> tuple[str, bool]:
+    def clone_or_pull(self, url: str, branch: str = "main") -> Tuple[str, bool]:
         """
         Clone repository if it doesn't exist, otherwise pull latest changes.
         
@@ -64,7 +62,7 @@ class GitManager:
             return True
         return False
     
-    def get_file_list(self, repo_path: str, extensions: Optional[list] = None) -> list[str]:
+    def get_file_list(self, repo_path: str, extensions: Optional[List[str]] = None) -> List[str]:
         """
         Get list of files in repository, optionally filtered by extension.
         
