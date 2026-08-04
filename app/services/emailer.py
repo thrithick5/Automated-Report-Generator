@@ -1,9 +1,12 @@
 import smtplib
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from app.config import settings
 from typing import Dict, Any
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
@@ -125,14 +128,22 @@ class EmailService:
             html_part = MIMEText(html_content, 'html')
             msg.attach(html_part)
             
-            # Send email
-            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
-                server.starttls()
+            # Check if port is standard SSL (465) or TLS (587/others)
+            is_ssl = int(self.smtp_port) == 465
+            server_class = smtplib.SMTP_SSL if is_ssl else smtplib.SMTP
+            
+            logger.info(f"Connecting to SMTP server {self.smtp_host}:{self.smtp_port} using {'SSL' if is_ssl else 'TLS/Plain'}...")
+            with server_class(self.smtp_host, int(self.smtp_port), timeout=15) as server:
+                if not is_ssl:
+                    server.starttls()
+                logger.info(f"Attempting SMTP login for {self.smtp_username}...")
                 server.login(self.smtp_username, self.smtp_password)
+                logger.info(f"Sending email message to: {msg['To']}")
                 server.send_message(msg)
             
+            logger.info("Email sent successfully!")
             return True
             
         except Exception as e:
-            print(f"Failed to send email: {str(e)}")
+            logger.error(f"Failed to send email: {str(e)}", exc_info=True)
             return False
