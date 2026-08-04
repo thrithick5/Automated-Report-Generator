@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from app.config import settings
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
