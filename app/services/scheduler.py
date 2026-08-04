@@ -19,14 +19,18 @@ class ReportScheduler:
     def __init__(self):
         self.scheduler = BackgroundScheduler()
 
-    def run_analysis_job(self, db: Session, config_id: int = 1):
-        """Execute the full analysis pipeline via the shared service."""
+    def run_analysis_job(self, config_id: int = 1):
+        """Execute the full analysis pipeline via the shared service using a fresh DB session."""
+        from app.database import SessionLocal
+        db = SessionLocal()
         try:
             logger.info(f"Starting scheduled analysis job at {datetime.now()}")
             result = run_analysis(db, config_id)
             logger.info(f"Analysis job finished: {result}")
         except Exception as e:
-            logger.error(f"Analysis job failed: {str(e)}")
+            logger.error(f"Scheduled analysis job failed: {str(e)}", exc_info=True)
+        finally:
+            db.close()
     
     def schedule_job(self, db: Session, config_id: int = 1):
         """
@@ -60,7 +64,8 @@ class ReportScheduler:
         
         # Add job
         self.scheduler.add_job(
-            func=lambda: self.run_analysis_job(db, config_id),
+            func=self.run_analysis_job,
+            args=[config_id],
             trigger=trigger,
             id='analysis_job',
             replace_existing=True

@@ -47,14 +47,25 @@ def save_configuration(config: ConfigRequest, db: Session = Depends(get_db)):
         existing_config.frequency = config.frequency
         db.commit()
         db.refresh(existing_config)
-        return existing_config
+        saved_config = existing_config
     else:
         # Create new
         new_config = Configuration(**config.dict())
         db.add(new_config)
         db.commit()
         db.refresh(new_config)
-        return new_config
+        saved_config = new_config
+
+    # Re-schedule background scheduler job whenever configuration is updated
+    from app.main import scheduler
+    if scheduler:
+        try:
+            scheduler.schedule_job(db, saved_config.id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Failed to update scheduler: {e}")
+
+    return saved_config
 
 
 @router.get("/", response_model=Optional[ConfigResponse])
