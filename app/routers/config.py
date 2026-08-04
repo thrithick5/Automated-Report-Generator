@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/config", tags=["configuration"])
 class ConfigRequest(BaseModel):
     repo_url: str
     branch: str = "main"
-    analysis_model: str = "gemini1.5flash"
+    analysis_model: str = "codestral-latest"
     recipients: str
     schedule_time: str = "09:00"
     frequency: str = "daily"

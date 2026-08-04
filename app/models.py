@@ -13,7 +13,7 @@ class Configuration(Base):
     id = Column(Integer, primary_key=True, index=True)
     repo_url = Column(String, nullable=False)
     branch = Column(String, default="main")
-    analysis_model = Column(String, default="gemini1.5flash")
+    analysis_model = Column(String, default="codestral-latest")
     recipients = Column(Text)  # Comma-separated email addresses
     schedule_time = Column(String, default="09:00")
     frequency = Column(String, default="daily")  # daily, weekly, biweekly
