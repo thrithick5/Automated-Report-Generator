@@ -1,4 +1,5 @@
 import smtplib
+import socket
 import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -138,14 +139,23 @@ class EmailService:
             is_ssl = port == 465
             server_class = smtplib.SMTP_SSL if is_ssl else smtplib.SMTP
             
-            logger.info(f"Connecting to SMTP server {self.smtp_host}:{port} using {'SSL' if is_ssl else 'TLS/Plain'}...")
-            with server_class(self.smtp_host, port, timeout=15) as server:
-                if not is_ssl:
-                    server.starttls()
-                logger.info(f"Attempting SMTP login for {self.smtp_username}...")
-                server.login(self.smtp_username, self.smtp_password)
-                logger.info(f"Sending email message to: {msg['To']}")
-                server.send_message(msg)
+            # Force IPv4 socket resolution to prevent 'Network is unreachable' IPv6 errors on cloud hosts like Render
+            orig_getaddrinfo = socket.getaddrinfo
+            def getaddrinfo_ipv4(host, port, family=0, type=0, proto=0, flags=0):
+                return orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+
+            logger.info(f"Connecting to SMTP server {self.smtp_host}:{port} using {'SSL' if is_ssl else 'TLS/Plain'} (IPv4)...")
+            try:
+                socket.getaddrinfo = getaddrinfo_ipv4
+                with server_class(self.smtp_host, port, timeout=20) as server:
+                    if not is_ssl:
+                        server.starttls()
+                    logger.info(f"Attempting SMTP login for {self.smtp_username}...")
+                    server.login(self.smtp_username, self.smtp_password)
+                    logger.info(f"Sending email message to: {msg['To']}")
+                    server.send_message(msg)
+            finally:
+                socket.getaddrinfo = orig_getaddrinfo
             
             logger.info("Email sent successfully!")
             return True, None
