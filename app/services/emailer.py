@@ -115,8 +115,13 @@ class EmailService:
             "Authorization": f"Bearer {api_key.strip()}",
             "Content-Type": "application/json"
         }
+        # Free Resend accounts require 'from' address to be 'onboarding@resend.dev' or a verified domain.
+        from_sender = "Code Report Generator <onboarding@resend.dev>"
+        if self.email_from and "@resend.dev" in self.email_from:
+            from_sender = self.email_from
+
         payload = {
-            "from": self.email_from or "onboarding@resend.dev",
+            "from": from_sender,
             "to": recipients,
             "subject": subject,
             "html": html
