@@ -93,14 +93,18 @@ app.include_router(config.router)
 app.include_router(analysis.router)
 app.include_router(reports.router)
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files if directory exists
+static_dir = Path("static")
+if static_dir.exists() and static_dir.is_dir():
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")
 async def root():
-    """Serve the main HTML page."""
-    return FileResponse("static/index.html")
+    """Serve the main HTML page if static files exist, else return API status."""
+    if static_dir.exists() and (static_dir / "index.html").exists():
+        return FileResponse(static_dir / "index.html")
+    return {"status": "healthy", "message": "AI Code Report Generator API is running", "docs": "/docs"}
 
 
 @app.get("/health")
