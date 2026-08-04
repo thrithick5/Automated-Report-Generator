@@ -148,9 +148,9 @@ def resend_report_email(db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="No recipients configured.")
 
     emailer = EmailService()
-    sent = emailer.send_report(recipients, report.full_report, report.repo_url)
+    sent, error_msg = emailer.send_report(recipients, report.full_report, report.repo_url)
     if not sent:
-        raise HTTPException(status_code=500, detail="Email sending failed. Check SMTP settings.")
+        raise HTTPException(status_code=500, detail=f"Email sending failed: {error_msg or 'Check SMTP settings'}")
     return {
         "status": "sent",
         "recipients": len(recipients),

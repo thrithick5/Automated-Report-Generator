@@ -104,7 +104,7 @@ class EmailService:
         """
         return html
     
-    def send_report(self, recipients: list[str], report_data: Dict[str, Any], repo_url: str = "") -> bool:
+    def send_report(self, recipients: list[str], report_data: Dict[str, Any], repo_url: str = "") -> Tuple[bool, Optional[str]]:
         """
         Send analysis report via email.
         
@@ -114,13 +114,18 @@ class EmailService:
             repo_url: Repository URL for subject line
         
         Returns:
-            bool: True if sent successfully
+            Tuple[bool, Optional[str]]: (success, error_message)
         """
+        if not self.smtp_username or not self.smtp_password:
+            err = "SMTP_USERNAME or SMTP_PASSWORD environment variable is missing on server."
+            logger.error(err)
+            return False, err
+
         try:
             # Create message
             msg = MIMEMultipart('alternative')
             msg['Subject'] = f"Daily Code Analysis Report - {datetime.now().strftime('%Y-%m-%d')}"
-            msg['From'] = self.email_from
+            msg['From'] = self.email_from or self.smtp_username
             msg['To'] = ', '.join(recipients)
             
             # Create HTML content
@@ -129,11 +134,12 @@ class EmailService:
             msg.attach(html_part)
             
             # Check if port is standard SSL (465) or TLS (587/others)
-            is_ssl = int(self.smtp_port) == 465
+            port = int(self.smtp_port) if self.smtp_port else 587
+            is_ssl = port == 465
             server_class = smtplib.SMTP_SSL if is_ssl else smtplib.SMTP
             
-            logger.info(f"Connecting to SMTP server {self.smtp_host}:{self.smtp_port} using {'SSL' if is_ssl else 'TLS/Plain'}...")
-            with server_class(self.smtp_host, int(self.smtp_port), timeout=15) as server:
+            logger.info(f"Connecting to SMTP server {self.smtp_host}:{port} using {'SSL' if is_ssl else 'TLS/Plain'}...")
+            with server_class(self.smtp_host, port, timeout=15) as server:
                 if not is_ssl:
                     server.starttls()
                 logger.info(f"Attempting SMTP login for {self.smtp_username}...")
@@ -142,8 +148,9 @@ class EmailService:
                 server.send_message(msg)
             
             logger.info("Email sent successfully!")
-            return True
+            return True, None
             
         except Exception as e:
-            logger.error(f"Failed to send email: {str(e)}", exc_info=True)
-            return False
+            err_msg = str(e)
+            logger.error(f"Failed to send email: {err_msg}", exc_info=True)
+            return False, err_msg

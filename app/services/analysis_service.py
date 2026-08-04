@@ -100,9 +100,9 @@ def run_analysis(db: Session, config_id: int = 1, send_email: bool = True) -> di
         if send_email and recipients:
             logger.info(f"Sending email to {len(recipients)} recipients")
             emailer = EmailService()
-            email_sent = bool(emailer.send_report(recipients, analysis_result, config.repo_url))
+            email_sent, email_err = emailer.send_report(recipients, analysis_result, config.repo_url)
             if not email_sent:
-                logger.error("Email sending failed (check SMTP settings)")
+                logger.error(f"Email sending failed: {email_err}")
 
         _finish_run(db, run, "success", email_sent=email_sent, report_id=report.id)
         return {
