@@ -1,6 +1,10 @@
 import smtplib
 import socket
 import logging
+import os
+import json
+import urllib.request
+import urllib.error
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -107,18 +111,14 @@ class EmailService:
     
     def _send_via_resend(self, api_key: str, recipients: list[str], subject: str, html: str) -> Tuple[bool, Optional[str]]:
         """Send email via Resend HTTP API (Port 443 - HTTPS)."""
-        import json
-        import urllib.request
         logger.info("Sending email via Resend HTTPS API (Port 443)...")
         url = "https://api.resend.com/emails"
         headers = {
             "Authorization": f"Bearer {api_key.strip()}",
             "Content-Type": "application/json"
         }
-        # Free Resend accounts require 'from' address to be 'onboarding@resend.dev' or a verified domain.
+        # Free Resend accounts MUST use 'onboarding@resend.dev' as sender
         from_sender = "Code Report Generator <onboarding@resend.dev>"
-        if self.email_from and "@resend.dev" in self.email_from:
-            from_sender = self.email_from
 
         payload = {
             "from": from_sender,
@@ -129,10 +129,22 @@ class EmailService:
         try:
             req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method="POST")
             with urllib.request.urlopen(req, timeout=15) as resp:
+                body = resp.read().decode('utf-8', errors='replace')
+                logger.info(f"Resend response ({resp.status}): {body[:500]}")
                 if resp.status in (200, 201):
                     logger.info("Email sent successfully via Resend!")
                     return True, None
-                return False, f"Resend API returned HTTP status {resp.status}"
+                return False, f"Resend API returned HTTP {resp.status}: {body[:200]}"
+        except urllib.error.HTTPError as he:
+            # Read the ACTUAL error body from Resend to understand 403
+            error_body = ""
+            try:
+                error_body = he.read().decode('utf-8', errors='replace')
+            except Exception:
+                pass
+            err_msg = f"Resend HTTP {he.code}: {error_body[:300] or he.reason}"
+            logger.error(f"Resend API error: {err_msg}")
+            return False, err_msg
         except Exception as e:
             err_msg = str(e)
             logger.error(f"Resend API error: {err_msg}")
@@ -140,27 +152,37 @@ class EmailService:
 
     def _send_via_brevo(self, api_key: str, recipients: list[str], subject: str, html: str) -> Tuple[bool, Optional[str]]:
         """Send email via Brevo HTTP API (Port 443 - HTTPS)."""
-        import json
-        import urllib.request
         logger.info("Sending email via Brevo HTTPS API (Port 443)...")
         url = "https://api.brevo.com/v3/smtp/email"
         headers = {
             "api-key": api_key.strip(),
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept": "application/json"
         }
         payload = {
-            "sender": {"email": self.email_from or self.smtp_username or "noreply@automatedreport.com", "name": "Report Generator"},
-            "to": [{"email": r} for r in recipients],
+            "sender": {"email": self.email_from or self.smtp_username or "noreply@automatedreport.com", "name": "Code Report Generator"},
+            "to": [{"email": r.strip()} for r in recipients],
             "subject": subject,
             "htmlContent": html
         }
         try:
             req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method="POST")
             with urllib.request.urlopen(req, timeout=15) as resp:
+                body = resp.read().decode('utf-8', errors='replace')
+                logger.info(f"Brevo response ({resp.status}): {body[:500]}")
                 if resp.status in (200, 201):
                     logger.info("Email sent successfully via Brevo!")
                     return True, None
-                return False, f"Brevo API returned HTTP status {resp.status}"
+                return False, f"Brevo API returned HTTP {resp.status}: {body[:200]}"
+        except urllib.error.HTTPError as he:
+            error_body = ""
+            try:
+                error_body = he.read().decode('utf-8', errors='replace')
+            except Exception:
+                pass
+            err_msg = f"Brevo HTTP {he.code}: {error_body[:300] or he.reason}"
+            logger.error(f"Brevo API error: {err_msg}")
+            return False, err_msg
         except Exception as e:
             err_msg = str(e)
             logger.error(f"Brevo API error: {err_msg}")
