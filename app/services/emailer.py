@@ -14,11 +14,11 @@ class EmailService:
     """Handles email sending operations."""
     
     def __init__(self):
-        self.smtp_host = settings.smtp_host
-        self.smtp_port = settings.smtp_port
-        self.smtp_username = settings.smtp_username
-        self.smtp_password = settings.smtp_password
-        self.email_from = settings.email_from
+        self.smtp_host = (settings.smtp_host or "smtp.gmail.com").strip()
+        self.smtp_port = str(settings.smtp_port or "587").strip()
+        self.smtp_username = (settings.smtp_username or "").strip()
+        self.smtp_password = (settings.smtp_password or "").replace(" ", "").strip()
+        self.email_from = (settings.email_from or self.smtp_username).strip()
     
     def create_report_html(self, report_data: Dict[str, Any]) -> str:
         """Create HTML email template for the report."""
