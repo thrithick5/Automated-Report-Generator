@@ -105,9 +105,65 @@ class EmailService:
         """
         return html
     
+    def _send_via_resend(self, api_key: str, recipients: list[str], subject: str, html: str) -> Tuple[bool, Optional[str]]:
+        """Send email via Resend HTTP API (Port 443 - HTTPS)."""
+        import json
+        import urllib.request
+        logger.info("Sending email via Resend HTTPS API (Port 443)...")
+        url = "https://api.resend.com/emails"
+        headers = {
+            "Authorization": f"Bearer {api_key.strip()}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "from": self.email_from or "onboarding@resend.dev",
+            "to": recipients,
+            "subject": subject,
+            "html": html
+        }
+        try:
+            req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                if resp.status in (200, 201):
+                    logger.info("Email sent successfully via Resend!")
+                    return True, None
+                return False, f"Resend API returned HTTP status {resp.status}"
+        except Exception as e:
+            err_msg = str(e)
+            logger.error(f"Resend API error: {err_msg}")
+            return False, f"Resend API error: {err_msg}"
+
+    def _send_via_brevo(self, api_key: str, recipients: list[str], subject: str, html: str) -> Tuple[bool, Optional[str]]:
+        """Send email via Brevo HTTP API (Port 443 - HTTPS)."""
+        import json
+        import urllib.request
+        logger.info("Sending email via Brevo HTTPS API (Port 443)...")
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "api-key": api_key.strip(),
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "sender": {"email": self.email_from or self.smtp_username or "noreply@automatedreport.com", "name": "Report Generator"},
+            "to": [{"email": r} for r in recipients],
+            "subject": subject,
+            "htmlContent": html
+        }
+        try:
+            req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                if resp.status in (200, 201):
+                    logger.info("Email sent successfully via Brevo!")
+                    return True, None
+                return False, f"Brevo API returned HTTP status {resp.status}"
+        except Exception as e:
+            err_msg = str(e)
+            logger.error(f"Brevo API error: {err_msg}")
+            return False, f"Brevo API error: {err_msg}"
+
     def send_report(self, recipients: list[str], report_data: Dict[str, Any], repo_url: str = "") -> Tuple[bool, Optional[str]]:
         """
-        Send analysis report via email.
+        Send analysis report via email (supporting HTTP APIs over port 443 and fallback SMTP).
         
         Args:
             recipients: List of email addresses
@@ -117,25 +173,36 @@ class EmailService:
         Returns:
             Tuple[bool, Optional[str]]: (success, error_message)
         """
+        subject = f"Daily Code Analysis Report - {datetime.now().strftime('%Y-%m-%d')}"
+        html_content = self.create_report_html(report_data)
+
+        # 1. Check if Resend HTTP API key is configured
+        resend_key = (settings.resend_api_key or os.environ.get("RESEND_API_KEY") or "").strip()
+        if resend_key:
+            return self._send_via_resend(resend_key, recipients, subject, html_content)
+
+        # 2. Check if Brevo HTTP API key is configured
+        brevo_key = (settings.brevo_api_key or os.environ.get("BREVO_API_KEY") or "").strip()
+        if brevo_key:
+            return self._send_via_brevo(brevo_key, recipients, subject, html_content)
+
+        # 3. Fallback to standard SMTP
         if not self.smtp_username or not self.smtp_password:
-            err = "SMTP_USERNAME or SMTP_PASSWORD environment variable is missing on server."
+            err = "SMTP credentials missing. Configure SMTP_USERNAME/SMTP_PASSWORD or RESEND_API_KEY in Render environment."
             logger.error(err)
             return False, err
 
         try:
             # Create message
             msg = MIMEMultipart('alternative')
-            msg['Subject'] = f"Daily Code Analysis Report - {datetime.now().strftime('%Y-%m-%d')}"
+            msg['Subject'] = subject
             msg['From'] = self.email_from or self.smtp_username
             msg['To'] = ', '.join(recipients)
             
-            # Create HTML content
-            html_content = self.create_report_html(report_data)
             html_part = MIMEText(html_content, 'html')
             msg.attach(html_part)
             
-            # Try primary port (587 TLS), and automatically fallback to 465 SSL if blocked/timed out
-            primary_port = int(self.smtp_port) if self.smtp_port else 587
+            primary_port = int(self.smtp_port) if self.smtp_port and self.smtp_port.isdigit() else 587
             ports_to_try = [(primary_port, primary_port == 465)]
             if primary_port != 465:
                 ports_to_try.append((465, True))
@@ -151,7 +218,7 @@ class EmailService:
                     server_class = smtplib.SMTP_SSL if is_ssl else smtplib.SMTP
                     logger.info(f"Connecting to SMTP server {self.smtp_host}:{port} using {'SSL' if is_ssl else 'TLS/Plain'} (IPv4)...")
                     try:
-                        with server_class(self.smtp_host, port, timeout=12) as server:
+                        with server_class(self.smtp_host, port, timeout=10) as server:
                             if not is_ssl:
                                 server.starttls()
                             logger.info(f"Attempting SMTP login for {self.smtp_username}...")
@@ -169,6 +236,11 @@ class EmailService:
                         break
             finally:
                 socket.getaddrinfo = orig_getaddrinfo
+
+            if "timed out" in str(last_error).lower():
+                detailed_msg = "Render Free Tier blocks outbound SMTP ports 587 & 465. Set RESEND_API_KEY or BREVO_API_KEY in Render Environment variables to send emails over HTTPS port 443."
+                logger.error(detailed_msg)
+                return False, detailed_msg
 
             return False, last_error
             

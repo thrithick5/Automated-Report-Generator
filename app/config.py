@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     smtp_username: str = ""
     smtp_password: str = ""
     email_from: str = ""
+    resend_api_key: str = ""
+    brevo_api_key: str = ""
     
     # Database
     database_url: str = "sqlite:///./data/reports.db"
