@@ -19,7 +19,7 @@ except ImportError:
 
 GITHUB_URL_RE = re.compile(
     r'^(?:(?:https?|git)://(?:www\.)?|git@)github\.com[/:]'
-    r'(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+?)(?:\.git)?/?$'
+    r'(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+?)(?:\.git)?(?:/.*)?$'
 )
 
 
@@ -135,6 +135,15 @@ class GitManager:
         GitHub URLs are downloaded as tarballs (no git required). Any other URL
         uses a git clone/pull when git is available.
         """
+        url = url.strip()
+        # Clean URLs pasted directly from browser tabs (e.g. https://github.com/owner/repo/tree/main)
+        tree_match = re.match(r'^(https?://github\.com/[^/]+/[^/]+)/(?:tree|blob)/([^/]+)/?$', url)
+        if tree_match:
+            url = tree_match.group(1)
+            branch = tree_match.group(2)
+        elif '/tree/' in url or '/blob/' in url:
+            url = re.sub(r'/(?:tree|blob)/.*$', '', url)
+
         github = self.parse_github_url(url)
         if github:
             return self.download_github_repo(github[0], github[1], branch), True
