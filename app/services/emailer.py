@@ -134,31 +134,43 @@ class EmailService:
             html_part = MIMEText(html_content, 'html')
             msg.attach(html_part)
             
-            # Check if port is standard SSL (465) or TLS (587/others)
-            port = int(self.smtp_port) if self.smtp_port else 587
-            is_ssl = port == 465
-            server_class = smtplib.SMTP_SSL if is_ssl else smtplib.SMTP
-            
-            # Force IPv4 socket resolution to prevent 'Network is unreachable' IPv6 errors on cloud hosts like Render
-            orig_getaddrinfo = socket.getaddrinfo
-            def getaddrinfo_ipv4(host, port, family=0, type=0, proto=0, flags=0):
-                return orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+            # Try primary port (587 TLS), and automatically fallback to 465 SSL if blocked/timed out
+            primary_port = int(self.smtp_port) if self.smtp_port else 587
+            ports_to_try = [(primary_port, primary_port == 465)]
+            if primary_port != 465:
+                ports_to_try.append((465, True))
 
-            logger.info(f"Connecting to SMTP server {self.smtp_host}:{port} using {'SSL' if is_ssl else 'TLS/Plain'} (IPv4)...")
+            last_error = None
+            orig_getaddrinfo = socket.getaddrinfo
+            def getaddrinfo_ipv4(host, p, family=0, type=0, proto=0, flags=0):
+                return orig_getaddrinfo(host, p, socket.AF_INET, type, proto, flags)
+
             try:
                 socket.getaddrinfo = getaddrinfo_ipv4
-                with server_class(self.smtp_host, port, timeout=20) as server:
-                    if not is_ssl:
-                        server.starttls()
-                    logger.info(f"Attempting SMTP login for {self.smtp_username}...")
-                    server.login(self.smtp_username, self.smtp_password)
-                    logger.info(f"Sending email message to: {msg['To']}")
-                    server.send_message(msg)
+                for port, is_ssl in ports_to_try:
+                    server_class = smtplib.SMTP_SSL if is_ssl else smtplib.SMTP
+                    logger.info(f"Connecting to SMTP server {self.smtp_host}:{port} using {'SSL' if is_ssl else 'TLS/Plain'} (IPv4)...")
+                    try:
+                        with server_class(self.smtp_host, port, timeout=12) as server:
+                            if not is_ssl:
+                                server.starttls()
+                            logger.info(f"Attempting SMTP login for {self.smtp_username}...")
+                            server.login(self.smtp_username, self.smtp_password)
+                            logger.info(f"Sending email message to: {msg['To']}")
+                            server.send_message(msg)
+                        logger.info("Email sent successfully!")
+                        return True, None
+                    except Exception as try_err:
+                        last_error = str(try_err)
+                        logger.warning(f"SMTP connection to port {port} failed: {last_error}")
+                        if port == primary_port and len(ports_to_try) > 1:
+                            logger.info("Retrying automatically over SSL port 465...")
+                            continue
+                        break
             finally:
                 socket.getaddrinfo = orig_getaddrinfo
-            
-            logger.info("Email sent successfully!")
-            return True, None
+
+            return False, last_error
             
         except Exception as e:
             err_msg = str(e)
