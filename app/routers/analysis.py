@@ -1,12 +1,15 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, Request
+import logging
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database import get_db, SessionLocal
 from app.models import AnalysisRun, Configuration, Report
 from app.services.analysis_service import _parse_recipients, is_run_due, run_analysis
 from app.services.emailer import EmailService
 from app.config import settings
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/analyze", tags=["analysis"])
 
@@ -23,13 +26,42 @@ def _is_serverless() -> bool:
     return bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
 
 
+def run_analysis_in_background(config_id: int):
+    """Wrapper function to execute analysis using a dedicated db session."""
+    db = SessionLocal()
+    try:
+        run_analysis(db, config_id=config_id)
+    except Exception as e:
+        logger.error(f"Background analysis failed: {e}")
+    finally:
+        db.close()
+
+
 @router.post("/now")
-def trigger_analysis(db: Session = Depends(get_db)):
-    """Trigger an immediate code analysis (synchronously)."""
-    result = run_analysis(db)
-    if result["status"] == "failed":
-        raise HTTPException(status_code=500, detail=result.get("error") or "Analysis failed")
-    return result
+def trigger_analysis(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Trigger an immediate code analysis in the background."""
+    config = db.query(Configuration).first()
+    if not config:
+        raise HTTPException(status_code=400, detail="No configuration found. Save settings first.")
+
+    # Guard against overlapping runs
+    running = db.query(AnalysisRun).filter(AnalysisRun.status == "running").first()
+    if running:
+        from datetime import timedelta
+        stale_for = timedelta(minutes=30)
+        started = running.started_at or datetime.utcnow()
+        if datetime.utcnow() - started < stale_for:
+            return {"status": "running", "message": "Analysis is already in progress"}
+        else:
+            logger.warning(f"Marking stale run #{running.id} as failed")
+            running.status = "failed"
+            running.error_message = "Marked failed: interrupted."
+            running.finished_at = datetime.utcnow()
+            db.commit()
+
+    # Launch background task
+    background_tasks.add_task(run_analysis_in_background, config.id)
+    return {"status": "running", "message": "Analysis started in background"}
 
 
 @router.post("/cron")
